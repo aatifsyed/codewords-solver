@@ -1,3 +1,4 @@
+#!/bin/env python3
 # %%
 import re
 import json
@@ -7,7 +8,7 @@ with open("words_dictionary.json") as jsonfile:
     dictionary: dict = json.load(jsonfile)
 
 # %%
-pattern = input("Describe the word as a regex")
+pattern = input("Describe the word as a regex:\n")
 number_of_matches = 0
 for word in dictionary.keys():
     if re.match(pattern, word):
