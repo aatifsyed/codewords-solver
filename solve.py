@@ -1,3 +1,4 @@
+#!/bin/env python3
 # %%
 import json
 import itertools
@@ -124,7 +125,7 @@ def solve(
 
 # %%
 # Load in the puzzle
-with open("page_8.json") as jsonfile:
+with open("puzzler_codewords_volume_2/page_12.json") as jsonfile:
     puzzle = json.load(jsonfile)
 
 # Can't map int -> str in JSON, so we used str -> str. Rectify that here
