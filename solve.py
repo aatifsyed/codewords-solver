@@ -1,6 +1,5 @@
 # %%
 import json
-import string
 import itertools
 import re
 import logging as log
@@ -19,19 +18,45 @@ CipherTable = Dict[int, Optional[str]]
 # Sequence of numbers that defines a word
 WordDescriptor = List[int]
 
+# How often does each number appear in our word descriptors?
+FrequencyTable = Dict[int, int]
+
 blank_cipher_table: CipherTable = {number: None for number in range(1, 27)}
 
 # %%
 def possible_characters(cipher_table: CipherTable):
-    for letter in string.ascii_lowercase:
+    # Letters sorted by frequency
+    for letter in "etaoinsrhdlucmfywgpbvkxqjz":
         if letter not in cipher_table.values():
             yield letter
 
 
-def iter_cipher(cipher_table: CipherTable) -> Iterable[CipherTable]:
-    next_empty_key = {value: key for key, value in cipher_table.items()}[None]
+def iter_cipher(
+    cipher_table: CipherTable, frequency_table: FrequencyTable
+) -> Iterable[CipherTable]:
+    remaining_frequency_table: FrequencyTable = {
+        key: value
+        for key, value in frequency_table.items()
+        if cipher_table[key] is None
+    }
+    best_value = 0
+    best_key = 0
+    for key, value in remaining_frequency_table.items():
+        if value > best_value:
+            best_key = key
+            best_value = value
     for character in possible_characters(cipher_table):
-        yield {**cipher_table, **{next_empty_key: character}}
+        yield {**cipher_table, **{best_key: character}}
+
+
+def get_frequency_table(word_descriptors: List[WordDescriptor]) -> FrequencyTable:
+    frequency_table = {number: 0 for number in range(1, 27)}
+
+    for word_descriptor in word_descriptors:
+        for number in word_descriptor:
+            frequency_table[number] += 1
+
+    return frequency_table
 
 
 def decipher_to_regex(
@@ -74,23 +99,27 @@ def cipher_is_feasible(
 
 
 def print_cipher(cipher_table: CipherTable):
-    print(
-        datetime.now().strftime("%H:%M:%S")
-        + "".join(map(lambda x: "_" if x is None else x, cipher_table.values()))
-    )
+    print(datetime.now().strftime("%H:%M:%S"), end=" ")
+    for i in range(1, 27):
+        print(cipher_table[i] if cipher_table[i] is not None else "_", end="")
+    print()
 
 
 # %%
-def solve(cipher_table: CipherTable, word_descriptors: List[WordDescriptor]):
+def solve(
+    cipher_table: CipherTable,
+    word_descriptors: List[WordDescriptor],
+    frequency_table: FrequencyTable,
+):
     if cipher_is_feasible(cipher_table, word_descriptors):
         if None not in cipher_table.values():
             # Found a full cipher table that works
             yield cipher_table
         else:
             # We've still got work to do
-            for cipher_table in iter_cipher(cipher_table):
+            for cipher_table in iter_cipher(cipher_table, frequency_table):
                 print_cipher(cipher_table)
-                yield from solve(cipher_table, word_descriptors)
+                yield from solve(cipher_table, word_descriptors, frequency_table)
 
 
 # %%
@@ -98,7 +127,14 @@ def solve(cipher_table: CipherTable, word_descriptors: List[WordDescriptor]):
 with open("page_8.json") as jsonfile:
     puzzle = json.load(jsonfile)
 
-word_descriptors: List[WordDescriptor] = puzzle["words"]
 # Can't map int -> str in JSON, so we used str -> str. Rectify that here
 known_keys = {int(key): value for key, value in puzzle["known_keys"].items()}
+
+starting_table: CipherTable = {**blank_cipher_table, **known_keys}
+word_descriptors: List[WordDescriptor] = puzzle["words"]
+frequency_table: FrequencyTable = get_frequency_table(word_descriptors)
+
 # %%
+next(solve(starting_table, word_descriptors, frequency_table))
+# %%
+# Aiming for efvgkjdbcwqptmhlznuosriyxa
