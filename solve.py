@@ -6,12 +6,14 @@ import re
 import logging as log
 from datetime import datetime
 
+import cProfile
+
 from typing import Dict, Any, Optional, Iterable, List
 
 # %%
 # Load our dictionary
-with open("words_dictionary.json") as jsonfile:
-    dictionary: Dict[str, Any] = json.load(jsonfile)
+with open("words_alpha.txt") as txt:
+    dictionary: str = txt.read()
 
 # Which numbers correspond to which letters?
 CipherTable = Dict[int, Optional[str]]
@@ -63,23 +65,18 @@ def get_frequency_table(word_descriptors: List[WordDescriptor]) -> FrequencyTabl
 def decipher_to_regex(
     cipher_table: CipherTable, word_descriptor: WordDescriptor
 ) -> str:
-    return (
-        "^"
-        + "".join(
-            map(
-                lambda x: cipher_table[x] if cipher_table[x] is not None else "[a-z]",  # type: ignore
-                word_descriptor,
-            )
+    return "".join(
+        map(
+            lambda x: cipher_table[x] if cipher_table[x] is not None else "[a-z]",  # type: ignore
+            word_descriptor,
         )
-        + "$"
     )
 
 
 def regex_in_dictionary(regex: str) -> bool:
     global dictionary
-    for word in dictionary:
-        if re.match(regex, word):
-            return True
+    if re.search(regex, dictionary):
+        return True
     return False
 
 
@@ -136,6 +133,6 @@ word_descriptors: List[WordDescriptor] = puzzle["words"]
 frequency_table: FrequencyTable = get_frequency_table(word_descriptors)
 
 # %%
-next(solve(starting_table, word_descriptors, frequency_table))
+cProfile.run("next(solve(starting_table, word_descriptors, frequency_table))")
+
 # %%
-# Aiming for efvgkjdbcwqptmhlznuosriyxa
