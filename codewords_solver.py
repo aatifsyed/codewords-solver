@@ -193,9 +193,12 @@ if __name__ == "__main__":
         dest="print",
         action="store_true",
     )
+    parser.add_argument(
+        "--exhaust", help="Exhaustive search", dest="exhaust", action="store_true"
+    )
 
     args = parser.parse_args(
-        ["--puzzle", "puzzler_codewords_volume_2/page_12.json", "--print"]
+        ["--puzzle", "puzzler_codewords_volume_2/page_12.json", "--print", "--exhaust"]
         if "__IPYTHON__" in vars(__builtins__)
         else None
     )
@@ -216,14 +219,18 @@ if __name__ == "__main__":
     word_descriptors: List[WordDescriptor] = puzzle["words"]
     frequency_table: FrequencyTable = get_frequency_table(word_descriptors)
 
-    for solution in solve(starting_table, word_descriptors, frequency_table):
+    solutions: List[CipherTable]= []
+
+    t0 = datetime.now()
+    for solution in solve(blank_cipher_table, word_descriptors, frequency_table):
         print("Found solution:")
         pprint(solution)
-        cont: str = input("Continue search?")
-        cont: bool = bool(strtobool(cont))
-        if cont:
+        solutions.append(solution)
+        if args.exhaust or bool(strtobool(input("Continue search?"))):
             continue
         else:
             break
+
+    print(f"found {len(solutions)} solutions, took {datetime.now() - t0}")
 
 # %%
