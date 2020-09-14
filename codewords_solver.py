@@ -1,6 +1,7 @@
 #!/bin/env python3
 # %%
 import argparse
+import cProfile
 import itertools
 import json
 import logging as log
@@ -196,6 +197,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--exhaust", help="Exhaustive search", dest="exhaust", action="store_true"
     )
+    parser.add_argument(
+        "--profile", help="Run the profiler", dest="profile", action="store_true"
+    )
 
     args = parser.parse_args(
         ["--puzzle", "puzzler_codewords_volume_2/page_12.json", "--print", "--exhaust"]
@@ -220,6 +224,10 @@ if __name__ == "__main__":
     frequency_table: FrequencyTable = get_frequency_table(word_descriptors)
 
     solutions: List[CipherTable]= []
+
+    if args.profile:
+        cProfile.run(statement="next(solve(blank_cipher_table, word_descriptors, frequency_table))", sort="tottime")
+        raise SystemExit
 
     t0 = datetime.now()
     for solution in solve(blank_cipher_table, word_descriptors, frequency_table):
